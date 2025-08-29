@@ -1,0 +1,74 @@
+import re
+import numpy as np
+from scipy.sparse import hstack, csr_matrix
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.cluster import KMeans
+
+def limpar_texto(texto):
+    texto = texto.lower()
+    texto = re.sub(r'[^\w\s]', '', texto)
+    return texto
+
+frases = [
+    "Quero reservar um hotel",
+    "Tem pousadas perto da praia?",
+    "Quais são os melhores passeios em Salvador?",
+    "Quero comprar uma passagem para o Rio de Janeiro",
+    "Onde posso comer comida típica?",
+    "Tem restaurantes italianos na cidade?",
+    "Como faço para reservar um city tour?",
+    "O voo para São Paulo está disponível?",
+    "Indica algum restaurante vegano?",
+    "Quanto custa o passeio para as dunas?",
+    "Quais hotéis têm café da manhã incluso?",
+    "Vocês vendem passagens aéreas?",
+    "Quero conhecer pontos turísticos locais",
+    "Tem promoções de pacotes de viagem?",
+    "Quero uma sugestão de passeio noturno"
+]
+
+frases_limpas = [limpar_texto(f) for f in frases]
+
+palavras_chave = {
+    'Restaurantes': ['restaurante', 'comida', 'vegano', 'italiano', 'tipica', 'comer'],
+    'Passagens': ['passagem', 'voo', 'pacote', 'promoção', 'aereas', 'aéreas'],
+    'Hospedagem': ['hotel', 'pousada', 'cafe', 'manha', 'manhã'],
+    'Passeio': ['passeio', 'city tour', 'ponto turistico', 'pontos turisticos', 'sugestao', 'tour', 'noturno', 'turisticos', 'turistico']
+}
+
+def criar_features_chave(frases, palavras_chave):
+    features = []
+    for categoria, palavras in palavras_chave.items():
+        feature_cat = []
+        for frase in frases:
+            if any(palavra in frase for palavra in palavras):
+                feature_cat.append(1)
+            else:
+                feature_cat.append(0)
+        features.append(feature_cat)
+    return np.array(features).T
+
+features_chave = criar_features_chave(frases_limpas, palavras_chave)
+
+vectorizer = TfidfVectorizer(ngram_range=(1,2))
+X_tfidf = vectorizer.fit_transform(frases_limpas)
+
+features_sparse = csr_matrix(features_chave)
+X_final = hstack([X_tfidf, features_sparse])
+
+kmeans = KMeans(n_clusters=4, random_state=42, n_init=10)
+kmeans.fit(X_final)
+
+# Mapear clusters para nomes conforme feature de maior valor no centroide (últimas 4 colunas)
+centroides = kmeans.cluster_centers_[:, -4:]
+nomes_features = list(palavras_chave.keys())
+cluster_para_nome = {}
+for i, centroide in enumerate(centroides):
+    idx_max = np.argmax(centroide)
+    cluster_para_nome[i] = nomes_features[idx_max]
+
+print("\n--- Agrupamento com clusters e nomes ---")
+for i, frase in enumerate(frases):
+    cluster_id = kmeans.labels_[i]
+    nome_cluster = cluster_para_nome[cluster_id]
+    print(f"'{frase}' => Cluster {cluster_id} ({nome_cluster})")
