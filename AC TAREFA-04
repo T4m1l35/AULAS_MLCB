@@ -1,0 +1,48 @@
+import re
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.cluster import KMeans
+
+# Função simples de pré-processamento
+def limpar_texto(texto):
+    texto = texto.lower()
+    texto = re.sub(r'[^\w\s]', '', texto)  # remove pontuação
+    return texto
+
+# Lista de mensagens
+mensagens = [
+    "Quero pedir pizza",
+    "Qual o valor da pizza grande?",
+    "Preciso de suporte no aplicativo",
+    "O app está travando",
+    "Vocês têm sobremesas?",
+    "Meu pedido está atrasado",
+    "Como faço para alterar meu endereço?",
+    "Quais são os sabores disponíveis?",
+    "O entregador não chegou ainda"
+]
+
+# Limpeza dos textos
+mensagens_limpas = [limpar_texto(m) for m in mensagens]
+
+# Vetorização com TF-IDF
+vectorizer = TfidfVectorizer()
+X = vectorizer.fit_transform(mensagens_limpas)
+
+# Modelo de agrupamento
+kmeans = KMeans(n_clusters=3, random_state=42, n_init=10)
+kmeans.fit(X)
+
+# Mostrar os clusters
+print("\n--- Agrupamento de mensagens ---")
+for i, msg in enumerate(mensagens):
+    print(f"'{msg}' => Cluster {kmeans.labels_[i]}")
+
+# Interação com o usuário
+while True:
+    nova_mensagem = input("\nDigite uma nova mensagem (ou 'sair' para encerrar): ")
+    if nova_mensagem.lower() == "sair":
+        break
+    nova_mensagem_limpa = limpar_texto(nova_mensagem)
+    X_novo = vectorizer.transform([nova_mensagem_limpa])
+    cluster_previsto = kmeans.predict(X_novo)
+    print(f"Essa mensagem se parece com o Cluster {cluster_previsto[0]}")
