@@ -1,0 +1,59 @@
+import time
+# --- CONFIGURAÇÃO DO AMBIENTE ---
+POSICAO_INICIAL = 0
+POSICAO_COMIDA = 4
+recompensa_total = 0
+
+# O agente começa na posição inicial.
+posicao_agente = POSICAO_INICIAL
+
+print("--- Iniciando a Simulação do PERSONAGEM COMILÃO ---")
+print(f"O agente começa na posição {posicao_agente} e quer chegar na comida na posição {POSICAO_COMIDA}.")
+print("-" * 30)
+
+# O agente tem no máximo 10 passos para tentar chegar à comida.
+for passo in range(10):
+    print(f"Passo {passo + 1}:")
+    
+    # O agente sempre toma a mesma AÇÃO: mover para a 'direita'.
+    acao_agente = 'direita'
+    print(f"   -> Ação do Agente: '{acao_agente}'")
+
+    # 1. ATUALIZE A POSIÇÃO DO AGENTE
+    #    Como a ação é sempre 'direita', simplesmente incrementamos a posição.
+    posicao_agente = posicao_agente + 1
+        
+    # 2. CALCULE A RECOMPENSA DO PASSO
+    #    Verificamos primeiro a condição de vitória.
+    if posicao_agente == POSICAO_COMIDA:
+        # Se chegou, recebe a recompensa positiva.
+        recompensa_do_passo = 20
+    else:
+        # Se ainda não chegou, recebe a penalidade de movimento.
+        recompensa_do_passo = -1
+
+    # 3. ATUALIZE A RECOMPENSA TOTAL
+    #    Acumulamos a recompensa do passo na variável total.
+    recompensa_total = recompensa_total + recompensa_do_passo
+        
+    # Exibe o resultado do passo
+    print(f"   <- Resposta do Ambiente: Nova Posição={posicao_agente}, Recompensa={recompensa_do_passo}")
+        
+    # 4. VERIFIQUE SE O JOGO TERMINOU
+    #    Se a condição de vitória foi atingida, paramos a simulação.
+    if posicao_agente == POSICAO_COMIDA:
+        print("\nO personagem encontrou a comida!")
+        break
+        
+    # Pausa para visualização
+    time.sleep(1)
+
+print("-" * 30)
+print(f"Simulação Finalizada! Recompensa total acumulada: {recompensa_total}")
+
+# Cálculo esperado da recompensa total:
+# Passo 1: posição=1, recompensa=-1, total=-1
+# Passo 2: posição=2, recompensa=-1, total=-2
+# Passo 3: posição=3, recompensa=-1, total=-3
+# Passo 4: posição=4, recompensa=+20, total=17  (pois -3 + 20 = 17)
+

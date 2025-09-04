@@ -1,0 +1,23 @@
+from sklearn.cluster import KMeans
+import numpy as np
+
+print("--- Exercício 4 -  Missão 2 (Aprendizado Não Supervisionado) ---")
+
+# Dados: [valor_transacao, hora_do_dia (0-23)]
+transacoes = np.array([
+    [15.50, 14], [30.00, 3], [12.75, 11],
+    [50.20, 19], [25.00, 9],
+    [2500.00, 3]  # Transação muito alta e de madrugada (suspeita)
+])
+
+# Criar o modelo KMeans para 2 clusters, com random_state para reprodutibilidade
+modelo_anomalia = KMeans(n_clusters=2, random_state=42, n_init=10)
+
+# Treinar o modelo e prever os clusters das transações
+clusters_transacoes = modelo_anomalia.fit_predict(transacoes)
+
+print(f"Clusters para as transações: {clusters_transacoes}")
+print("A transação anômala é aquela que está em um cluster isolado!")
+print("-" * 50, "\n")
+
+
