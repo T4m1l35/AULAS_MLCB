@@ -1,0 +1,40 @@
+import numpy as np
+import time
+
+print("\n--- Exercício 6: O Vento Traiçoeiro ---")
+posicao_agente = 0
+objetivo = 9
+recompensa_total = 0
+
+for passo in range(20):
+    acao = np.random.choice(['esquerda', 'direita'])
+    print(f"Passo {passo + 1}: Posição={posicao_agente}, Tentando ir para '{acao}'")
+    
+    # TODO 1: Chance do vento
+    vento_soprou = np.random.rand() < 0.3
+    
+    # TODO 2: Movimento condicionado ao vento
+    if not vento_soprou:
+        if acao == 'direita':
+            posicao_agente += 1
+        else:
+            posicao_agente -= 1
+        # Limita a posição ao corredor
+        posicao_agente = np.clip(posicao_agente, 0, 9)
+        print(" Vento não soprou. Movimento executado.")
+    else:
+        print(" Vento forte! Movimento falhou, agente permaneceu no lugar.")
+    
+    # TODO 3: Recompensa
+    if posicao_agente == objetivo:
+        recompensa_total += 50
+        print(" Objetivo alcançado! Recompensa +50.")
+        break
+    else:
+        recompensa_total -= 1
+        print(" Passo normal. Penalidade -1.")
+    
+    time.sleep(0.5)
+
+print(f"\nSimulação finalizada! Posição final: {posicao_agente}, Recompensa: {recompensa_total}")
+

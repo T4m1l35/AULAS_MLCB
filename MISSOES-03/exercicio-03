@@ -1,0 +1,38 @@
+import numpy as np
+import time
+
+print("\n--- Exercício 3: O Caminho Perigoso ---")
+posicao_agente = 5
+objetivo = 9
+buraco = 2
+recompensa_total = 0
+
+for passo in range(15):
+    acao = np.random.choice(['esquerda', 'direita'])
+    print(f"Passo {passo + 1}: Posição={posicao_agente}, Ação='{acao}'")
+    
+    # Movimento do agente
+    if acao == 'direita':
+        posicao_agente += 1
+    else:
+        posicao_agente -= 1
+    
+    # Garante que o agente fica dentro do corredor
+    posicao_agente = np.clip(posicao_agente, 0, 9)
+
+    # TODO 1: Verifica o estado atual e aplica a recompensa
+    if posicao_agente == objetivo:
+        recompensa_total += 20
+        print(" Objetivo alcançado! Recompensa +20.")
+        break
+    elif posicao_agente == buraco:
+        recompensa_total -= 50
+        print(" O agente caiu no buraco! Penalidade -50.")
+        break
+    else:
+        recompensa_total -= 1
+        print(" Passo comum. Penalidade -1.")
+
+    time.sleep(0.5)
+
+print(f"\nSimulação finalizada! Posição final: {posicao_agente}, Recompensa: {recompensa_total}")
