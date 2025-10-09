@@ -1,0 +1,107 @@
+
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.impute import SimpleImputer
+from sklearn.compose import ColumnTransformer
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, classification_report, roc_auc_score
+
+
+np.random.seed(42)
+n = 400  # número de registros
+
+dados = pd.DataFrame({
+    "idade": np.random.randint(25, 66, size=n),
+    "salario_anual": np.random.randint(20000, 200000, size=n).astype(float),
+    "anos_empregado": np.random.randint(0, 31, size=n),
+    "valor_emprestimo": np.random.randint(5000, 150000, size=n),
+    "tipo_moradia": np.random.choice(["Aluguel", "Propria", "Financiada"], size=n)
+})
+
+
+mask = np.random.choice([True, False], size=n, p=[0.1, 0.9])
+dados.loc[mask, "salario_anual"] = np.nan
+
+
+dados["proporcao_emprestimo_salario"] = dados["valor_emprestimo"] / dados["salario_anual"]
+
+
+dados["risco_inadimplencia"] = (
+    (dados["proporcao_emprestimo_salario"] > 1.0) |  # empréstimo maior que o salário
+    ((dados["valor_emprestimo"] > 80000) & (dados["anos_empregado"] < 3)) |
+    ((dados["salario_anual"] < 40000) & (dados["valor_emprestimo"] > 30000))
+).astype(int)
+
+
+X = dados.drop("risco_inadimplencia", axis=1)
+y = dados["risco_inadimplencia"]
+
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.3, random_state=42, stratify=y
+)
+
+
+num_cols = ["idade", "salario_anual", "anos_empregado", "valor_emprestimo", "proporcao_emprestimo_salario"]
+cat_cols = ["tipo_moradia"]
+
+num_pipeline = Pipeline(steps=[
+    ("imputer", SimpleImputer(strategy="mean")),
+    ("scaler", StandardScaler())
+])
+
+cat_pipeline = Pipeline(steps=[
+    ("encoder", OneHotEncoder(handle_unknown="ignore"))
+])
+
+preprocessor = ColumnTransformer(transformers=[
+    ("num", num_pipeline, num_cols),
+    ("cat", cat_pipeline, cat_cols)
+])
+
+
+modelo = Pipeline(steps=[
+    ("preprocessamento", preprocessor),
+    ("classificador", RandomForestClassifier(
+        n_estimators=300,
+        max_depth=10,
+        class_weight="balanced",
+        random_state=42
+    ))
+])
+
+
+modelo.fit(X_train, y_train)
+
+
+y_pred = modelo.predict(X_test)
+y_prob = modelo.predict_proba(X_test)[:, 1]
+
+print("🔹 Acurácia:", round(accuracy_score(y_test, y_pred), 3))
+print("\n🔹 Relatório de Classificação:")
+print(classification_report(y_test, y_pred))
+print("🔹 ROC AUC:", round(roc_auc_score(y_test, y_prob), 3))
+
+
+novo_cliente = pd.DataFrame({
+    "idade": [35],
+    "salario_anual": [10000],
+    "anos_empregado": [8],
+    "valor_emprestimo": [40000],
+    "tipo_moradia": ["Propria"]
+})
+
+
+novo_cliente["proporcao_emprestimo_salario"] = novo_cliente["valor_emprestimo"] / novo_cliente["salario_anual"]
+
+
+risco_previsto = modelo.predict(novo_cliente)[0]
+probabilidade = modelo.predict_proba(novo_cliente)[0][1]
+
+print("\n🔹 Previsão para novo cliente:")
+print("Risco:", "Alto Risco" if risco_previsto == 1 else "Baixo Risco")
+print("Probabilidade de inadimplência:", f"{probabilidade:.2%}")
+
