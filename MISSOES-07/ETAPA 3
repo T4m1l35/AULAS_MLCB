@@ -1,0 +1,64 @@
+import tensorflow as tf
+from tensorflow.keras.datasets import imdb
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Embedding, LSTM, Dense
+
+
+vocab_size = 10000
+
+
+(x_train, y_train), (x_test, y_test) = imdb.load_data(num_words=vocab_size)
+
+
+maxlen = 200  
+
+x_train = pad_sequences(x_train, maxlen=maxlen, padding='post', truncating='post')
+x_test = pad_sequences(x_test, maxlen=maxlen, padding='post', truncating='post')
+
+
+
+model = Sequential()
+model.add(Embedding(input_dim=vocab_size, output_dim=128, input_length=maxlen))  
+model.add(LSTM(64))  
+model.add(Dense(1, activation='sigmoid')) 
+
+
+
+model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+
+history = model.fit(x_train, y_train, epochs=3, batch_size=64, validation_split=0.2)
+
+
+
+loss, accuracy = model.evaluate(x_test, y_test)
+print(f'Test Loss: {loss:.4f}')
+print(f'Test Accuracy: {accuracy:.4f}')
+
+
+
+word_index = imdb.get_word_index()
+
+def preprocess_review(review):
+    
+    words = review.lower().split()
+
+    seq = [word_index.get(w, 2) for w in words]  
+    seq_padded = pad_sequences([seq], maxlen=maxlen, padding='post', truncating='post')
+    return seq_padded
+
+
+test_reviews = [
+    "This movie was fantastic! I really loved it.",
+    "Terrible movie. It was a waste of time.",
+    "An average film, nothing special.",
+    "I do not like this movie at all."
+]
+
+for review in test_reviews:
+    processed = preprocess_review(review)
+    prediction = model.predict(processed)[0][0]
+    sentiment = "Positivo" if prediction > 0.5 else "Negativo"
+    print(f'Review: "{review}"')
+    print(f'Predição: {prediction:.4f} => Sentimento: {sentiment}\n')
+
